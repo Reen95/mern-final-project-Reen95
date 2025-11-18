@@ -1,0 +1,29 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install server deps
+        working-directory: ./server
+        run: npm ci
+      - name: Run server tests
+        working-directory: ./server
+        env:
+          MONGO_TEST_URI: mongodb://127.0.0.1:27017/mern_ci_test
+        run: |
+          sudo apt-get update && sudo apt-get install -y mongodb
+          mongod --fork --logpath /var/log/mongod.log --dbpath /tmp/mongo-db
+          npm test
+      - name: Install client deps
+        working-directory: ./client
+        run: npm ci
+      - name: Run client tests
+        working-directory: ./client
+        run: npm test
